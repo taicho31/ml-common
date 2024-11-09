@@ -11,8 +11,13 @@ class Common_LGB_Modelling:
     Train, test data and target should be the same data type. (Pandas or Numpy)
     """
 
-    def __init__(self, model_class):
+    def __init__(self, model_class, custom_callback=None):
         self.model_class = model_class
+        self.custom_callback = custom_callback
+        self.default_callback = [
+            early_stopping(stopping_rounds=50),
+            log_evaluation(100),
+        ]
 
     def train(self, x_tr, y_tr, params):
 
@@ -23,10 +28,10 @@ class Common_LGB_Modelling:
 
     def train_and_valid(self, x_tr, y_tr, x_val, y_val, params):
 
-        callbacks = [
-            early_stopping(stopping_rounds=50, first_metric_only=True),
-            log_evaluation(100),
-        ]
+        if self.custom_callback:
+            callbacks = self.custom_callback
+        else:
+            callbacks = self.default_callback
 
         model = self.model_class(**params)
         model = model.fit(x_tr, y_tr, eval_set=[(x_val, y_val)], callbacks=callbacks)
@@ -43,7 +48,7 @@ class Common_LGB_Modelling:
         test_pred_all = []
         for idx in range(0, len(test), batch_size):
             test_pred_batch = [
-                model.predict(test.iloc[idx: idx + batch_size]) for model in models
+                model.predict(test.iloc[idx : idx + batch_size]) for model in models
             ]
             test_pred_batch = np.mean(test_pred_batch, axis=0)
             test_pred_all.append(test_pred_batch)
@@ -53,7 +58,7 @@ class Common_LGB_Modelling:
         test_pred_all = []
         for idx in range(0, len(test), batch_size):
             test_pred_batch = [
-                model.predict(test[idx: idx + batch_size]) for model in models
+                model.predict(test[idx : idx + batch_size]) for model in models
             ]
             test_pred_batch = np.mean(test_pred_batch, axis=0)
             test_pred_all.append(test_pred_batch)
@@ -116,12 +121,12 @@ class Common_CB_Modelling:
         for idx in range(0, len(test), batch_size):
             if isinstance(models[0], CatBoostClassifier):
                 test_pred_batch = [
-                    model.predict_proba(test.iloc[idx: idx + batch_size])[:, 1]
+                    model.predict_proba(test.iloc[idx : idx + batch_size])[:, 1]
                     for model in models
                 ]
             elif isinstance(models[0], CatBoostRegressor):
                 test_pred_batch = [
-                    model.predict(test.iloc[idx: idx + batch_size]) for model in models
+                    model.predict(test.iloc[idx : idx + batch_size]) for model in models
                 ]
             test_pred_batch = np.mean(test_pred_batch, axis=0)
             test_pred_all.append(test_pred_batch)
@@ -132,12 +137,12 @@ class Common_CB_Modelling:
         for idx in range(0, len(test), batch_size):
             if isinstance(models[0], CatBoostClassifier):
                 test_pred_batch = [
-                    model.predict_proba(test[idx: idx + batch_size])[:, 1]
+                    model.predict_proba(test[idx : idx + batch_size])[:, 1]
                     for model in models
                 ]
             elif isinstance(models[0], CatBoostRegressor):
                 test_pred_batch = [
-                    model.predict(test[idx: idx + batch_size]) for model in models
+                    model.predict(test[idx : idx + batch_size]) for model in models
                 ]
             test_pred_batch = np.mean(test_pred_batch, axis=0)
             test_pred_all.append(test_pred_batch)
