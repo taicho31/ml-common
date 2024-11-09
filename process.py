@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn import preprocessing
 
 
 def reduce_mem_usage(df):
@@ -45,3 +46,19 @@ def reduce_mem_usage(df):
     print("Decreased by {:.1f}%".format(100 * (start_mem - end_mem) / start_mem))
 
     return df
+
+
+def train_encoding(input_df, categorical_cols):
+    label_encoders = []
+    for f in categorical_cols:
+        lbl = preprocessing.LabelEncoder()
+        lbl.fit(list(input_df[f]))
+        input_df[f] = lbl.transform(list(input_df[f]))
+        label_encoders.append(lbl)
+    return input_df, label_encoders
+
+
+def test_encoding(input_df, categorical_cols, label_encoders):
+    for f, lbl in zip(categorical_cols, label_encoders):
+        input_df[f] = lbl.transform(list(input_df[f]))
+    return input_df
